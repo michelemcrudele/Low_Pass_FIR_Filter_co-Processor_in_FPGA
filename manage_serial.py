@@ -1,0 +1,56 @@
+import serial
+
+# arty4
+usb_num = 31
+# ser = serial.Serial("/dev/ttyUSB"+str(usb_num), baudrate=115200)
+# Reading random values from file, passing them to FPGA and saving the output to an external file
+
+values = []
+with open("input_vectors.txt", "r") as fid:
+    lines = fid.readlines()
+    N = len(lines)
+    for l in lines:
+        i = int(l)
+        if i < 0:
+            i = 256 + i
+        print(i)
+        values.append(i)
+
+#values = [x%256 for x in range(1000)]
+
+o_values = [0]*N
+
+ser = serial.Serial("/dev/ttyUSB"+str(usb_num), baudrate=115200)
+for i in range(N):
+    ser.write(chr(values[i]))
+    d = ser.read()
+    o_values[i] = ord(d)
+
+with open("results_vectors.txt", "w") as fid:
+    for d in o_values:
+        if d > 127:
+            d = d - 256
+        print(d)
+        fid.write(str(d)+"\n")
+
+"""
+with open("input_vectors.txt", "r") as f_in:
+    with open("results_vectors.txt", "w") as f_out:
+        lines = f_in.readlines()
+        for line in lines:
+            i = int(line)
+            if i < 0:
+                # 2 complement
+                i = 256 + i
+            # write() and read() because the serial port can represent 8bit data,
+            # while a printable character is represented by 7bit data,
+            # so this is an exploit to use that extra 1bit
+            ser.write(chr(i))
+            d = ser.read()
+            out = ord(d)
+            if out > 127:
+                out = out - 256
+            # ord(d) => integer that represents the character d
+            print(out)
+            f_out.write(str(out)+"\n")
+"""
